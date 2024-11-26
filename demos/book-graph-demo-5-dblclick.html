@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Graph Demo 5</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: #f8fafc;
+        }
+        .voronoi-cell {
+            fill-opacity: 0.4;
+            stroke: #ccc;
+            stroke-width: 1px;
+        }
+        .node {
+            fill: #3B82F6;
+            stroke: #fff;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .tooltip {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <svg id="voronoi-svg" width="800" height="600"></svg>
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+    <script>
+        const bookData = {
+            chapters: [
+                {
+                    id: 1,
+                    title: "In the Beginning",
+                    tips: [
+                        {
+                            id: "1.1",
+                            title: "Don't try to BE something Great, Try to BUILD something Great",
+                            content: [
+                                { id: "1.1.1", text: "The strength of a startup is in the team not the individual" },
+                                { id: "1.1.2", text: "First-time entrepreneurs need to be a sponge, not a rock" }
+                            ]
+                        },
+                        {
+                            id: "1.2",
+                            title: "An Idea is NOT a Product",
+                            content: [
+                                { id: "1.2.1", text: "Ideas are cheap, execution is everything" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Build a Solid Foundation",
+                    tips: [
+                        {
+                            id: "2.1",
+                            title: "Transform Yourself into a Lean Mean Business Machine",
+                            content: [
+                                { id: "2.1.1", text: "Technical skills alone are not enough" }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        const points = [];
+        bookData.chapters.forEach((chapter, i) => {
+            points.push({ id: `chapter-${chapter.id}`, title: chapter.title, level: "chapter", x: Math.random() * 800, y: Math.random() * 600 });
+            chapter.tips.forEach((tip, j) => {
+                points.push({ id: `tip-${tip.id}`, title: tip.title, level: "tip", x: Math.random() * 800, y: Math.random() * 600, parent: `chapter-${chapter.id}` });
+                tip.content.forEach((content, k) => {
+                    points.push({ id: `content-${content.id}`, title: content.text, level: "content", x: Math.random() * 800, y: Math.random() * 600, parent: `tip-${tip.id}` });
+                });
+            });
+        });
+
+        const width = 800;
+        const height = 600;
+
+        const svg = d3.select("#voronoi-svg");
+        const tooltip = d3.select("#tooltip");
+
+        const voronoi = d3.Delaunay.from(
+            points.map(p => [p.x, p.y])
+        ).voronoi([0, 0, width, height]);
+
+        svg.selectAll(".voronoi-cell")
+            .data(points)
+            .enter()
+            .append("path")
+            .attr("class", "voronoi-cell")
+            .attr("d", (d, i) => voronoi.renderCell(i))
+            .attr("fill", (d, i) => d3.interpolateRainbow(i / points.length));
+
+        svg.selectAll(".node")
+            .data(points)
+            .enter()
+            .append("circle")
+            .attr("class", "node")
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y)
+            .attr("r", 5)
+            .attr("fill", d => d.level === "chapter" ? "#3B82F6" : d.level === "tip" ? "#F59E0B" : "#10B981")
+            .on("mouseover", (event, d) => {
+                tooltip.style("display", "block")
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY + 10}px`)
+                    .html(`<strong>${d.title}</strong>`);
+            })
+            .on("mouseout", () => {
+                tooltip.style("display", "none");
+            })
+            .on("dblclick", (event, d) => {
+                if (d.parent) {
+                    const parentNode = points.find(p => p.id === d.parent);
+                    if (parentNode) {
+                        alert(`Navigating to parent: ${parentNode.title}`);
+                    }
+                } else {
+                    alert("No parent to navigate to.");
+                }
+            });
+    </script>
+</body>
+</html>

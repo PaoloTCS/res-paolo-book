@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Graph Demo with Q&A</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <style>
+        body { 
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .graph-container {
+            width: 100vw;
+            height: 100vh;
+            background: #f8fafc;
+            position: relative;
+        }
+        .question-panel {
+            position: fixed;
+            left: 1rem;
+            top: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            width: 300px;
+            z-index: 10;
+        }
+        .info-panel {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            max-width: 24rem;
+            z-index: 10;
+        }
+        .question-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #CBD5E0;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .ask-button {
+            background: #3B82F6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .ask-button:hover {
+            background: #2563EB;
+        }
+        .answer-panel {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+        }
+        .node {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .node:hover {
+            filter: brightness(90%);
+        }
+        .highlight {
+            fill: #FCD34D !important;
+            stroke: #F59E0B !important;
+            stroke-width: 3;
+        }
+        .matched-path {
+            stroke: #FCD34D !important;
+            stroke-width: 3;
+        }
+        .edge-label {
+            font-size: 12px;
+            fill: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Book data structure
+        const bookData = {
+            chapters: [
+                {
+                    id: 1,
+                    title: "In the Beginning",
+                    tips: [
+                        { 
+                            id: "1.1", 
+                            title: "Don't try to BE something Great, Try to BUILD something Great",
+                            content: [
+                                {
+                                    id: "1.1.1",
+                                    type: "key_point",
+                                    text: "The strength of a startup is in the team not the individual"
+                                },
+                                {
+                                    id: "1.1.2",
+                                    type: "summary",
+                                    text: "First-time entrepreneurs need to be a sponge, not a rock"
+                                }
+                            ]
+                        },
+                        { 
+                            id: "1.2", 
+                            title: "An Idea is NOT a Product",
+                            content: [
+                                {
+                                    id: "1.2.1",
+                                    type: "key_point",
+                                    text: "Ideas are cheap, execution is everything"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Build a Solid Foundation",
+                    tips: [
+                        { 
+                            id: "2.1", 
+                            title: "Transform Yourself into a Lean Mean Business Machine",
+                            content: [
+                                {
+                                    id: "2.1.1",
+                                    type: "key_point",
+                                    text: "Technical skills alone are not enough"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        function BookGraphWithQA() {
+            const [selectedNode, setSelectedNode] = React.useState(null);
+            const [question, setQuestion] = React.useState('');
+            const [answer, setAnswer] = React.useState(null);
+            const [highlightedNodes, setHighlightedNodes] = React.useState(new Set());
+            
+            // Layout calculations
+            const width = Math.min(window.innerWidth, 1200);
+            const height = Math.min(window.innerHeight, 800);
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const chapterRadius = Math.min(width, height) * 0.25;
+            const tipRadius = chapterRadius * 0.6;
+            const contentRadius = tipRadius * 0.5;
+
+            // Calculate positions
+            const chapterPositions = bookData.chapters.map((chapter, index) => {
+                const angle = (index * 2 * Math.PI) / bookData.chapters.length;
+                return {
+                    ...chapter,
+                    x: centerX + chapterRadius * Math.cos(angle),
+                    y: centerY + chapterRadius * Math.sin(angle)
+                };
+            });
+
+            const tipPositions = chapterPositions.flatMap(chapter => {
+                return chapter.tips.map((tip, tipIndex) => {
+                    const baseAngle = Math.atan2(chapter.y - centerY, chapter.x - centerX);
+                    const tipAngle = baseAngle + ((tipIndex - (chapter.tips.length - 1) / 2) * 0.4);
+                    const x = chapter.x + tipRadius * Math.cos(tipAngle);
+                    const y = chapter.y + tipRadius * Math.sin(tipAngle);
+                    
+                    const contentPositions = tip.content.map((content, contentIndex) => {
+                        const contentAngle = tipAngle + ((contentIndex - (tip.content.length - 1) / 2) * 0.3);
+                        return {
+                            ...content,
+                            x: x + contentRadius * Math.cos(contentAngle),
+                            y: y + contentRadius * Math.sin(contentAngle)
+                        };
+                    });
+
+                    return {
+                        ...tip,
+                        x,
+                        y,
+                        chapterId: chapter.id,
+                        contentPositions
+                    };
+                });
+            });
+
+            function findMatchingTips(question) {
+                const terms = question.toLowerCase().split(' ')
+                    .filter(term => term.length > 2);
+                const matches = [];
+                
+                bookData.chapters.forEach(chapter => {
+                    chapter.tips.forEach(tip => {
+                        let score = 0;
+                        const searchText = `${tip.title} ${tip.content.map(c => c.text).join(' ')}`.toLowerCase();
+                        
+                        terms.forEach(term => {
+                            if (searchText.includes(term)) score++;
+                        });
+                        
+                        if (score > 0) {
+                            matches.push({
+                                score,
+                                tip,
+                                chapter
+                            });
+                        }
+                    });
+                });
+                
+                return matches.sort((a, b) => b.score - a.score);
+            }
+
+            function handleAskQuestion() {
+                if (!question.trim()) return;
+                
+                const matches = findMatchingTips(question);
+                if (matches.length > 0) {
+                    const bestMatch = matches[0];
+                    setAnswer({
+                        chapterId: bestMatch.chapter.id,
+                        tipId: bestMatch.tip.id,
+                        chapter: bestMatch.chapter.title,
+                        tip: bestMatch.tip.title,
+                        content: bestMatch.tip.content
+                    });
+                    
+                    const nodesToHighlight = new Set([
+                        'book',
+                        `chapter-${bestMatch.chapter.id}`,
+                        `tip-${bestMatch.tip.id}`,
+                        ...bestMatch.tip.content.map(c => `content-${c.id}`)
+                    ]);
+                    setHighlightedNodes(nodesToHighlight);
+                } else {
+                    setAnswer({
+                        error: "I couldn't find a matching tip for your question. Please try rephrasing it."
+                    });
+                    setHighlightedNodes(new Set());
+                }
+            }
+
+            return (
+                <div className="graph-container">
+                    {/* Question Panel */}
+                    <div className="question-panel">
+                        <h3>Ask a Question</h3>
+                        <input
+                            type="text"
+                            className="question-input"
+                            value={question}
+                            onChange={(e) => setQuestion(e.target.value)}
+                            placeholder="e.g., How do I build a great team?"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAskQuestion()}
+                        />
+                        <button className="ask-button" onClick={handleAskQuestion}>
+                            Ask
+                        </button>
+                        
+                        {answer && (
+                            <div className="answer-panel">
+                                {answer.error ? (
+                                    <p>{answer.error}</p>
+                                ) : (
+                                    <>
+                                        <h4>Found in Chapter {answer.chapterId}:</h4>
+                                        <p><strong>{answer.chapter}</strong></p>
+                                        <h4>Tip:</h4>
+                                        <p>{answer.tip}</p>
+                                        <h4>Key Points:</h4>
+                                        <ul>
+                                            {answer.content.map((c, i) => (
+                                                <li key={i}>{c.text}</li>
+                                            ))}
+                                        </ul>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Graph */}
+                    <svg width={width} height={height}>
+                        {/* Center node */}
+                        <circle 
+                            cx={centerX} 
+                            cy={centerY} 
+                            r="25" 
+                            fill="#3B82F6"
+                            className={`node ${highlightedNodes.has('book') ? 'highlight' : ''}`}
+                            onClick={() => setSelectedNode({ title: "Build Something Great!", type: "book" })}
+                        />
+                        <text 
+                            x={centerX} 
+                            y={centerY} 
+                            textAnchor="middle" 
+                            dy=".3em" 
+                            fill="white"
+                            pointerEvents="none"
+                        >
+                            Book
+                        </text>
+
+                        {/* Connections */}
+                        {chapterPositions.map(chapter => (
+                            <g key={`chapter-${chapter.id}`}>
+                                <line
+                                    x1={centerX}
+                                    y1={centerY}
+                                    x2={chapter.x}
+                                    y2={chapter.y}
+                                    stroke="#CBD5E0"
+                                    strokeWidth="2"
+                                    className={highlightedNodes.has(`chapter-${chapter.id}`) ? 'matched-path' : ''}
+                                />
+                                <text
+                                    x={(centerX + chapter.x) / 2}
+                                    y={(centerY + chapter.y) / 2 - 10}
+                                    textAnchor="middle"
+                                    fill="#718096"
+                                >
+                                    contains
+                                </text>
+                            </g>
+                        ))}
+
+                        {/* Chapter nodes */}
+                        {chapterPositions.map(chapter => (
+                            <g key={chapter.id}>
+                                <circle
+                                    cx={chapter.x}
+                                    cy={chapter.y}
+                                    r="30"
+                                    fill="#22C55E"
+                                    className={`node ${highlightedNodes.has(`chapter-${chapter.id}`) ? 'highlight' : ''}`}
+                                    onClick={() => setSelectedNode(chapter)}
+                                />
+                                <text
+                                    x={chapter.x}
+                                    y={chapter.y}
+                                    textAnchor="middle"
+                                    dy=".3em"
+                                    fill="white"
+                                    pointerEvents="none"
+                                >
+                                    Ch {chapter.id}
+                                </text>
+                            </g>
+                        ))}
+
+                        {/* Tip connections and nodes */}
+                        {tipPositions.map(tip => {
+                            const chapter = chapterPositions.find(c => c.id === tip.chapterId);
+                            return (
+                                <g key={`tip-${tip.id}`}>
+                                    <line
+                                        x1={chapter.x}
+                                        y1={chapter.y}
+                                        x2={tip.x}
+                                        y2={tip.y}
+                                        stroke="#CBD5E0"
+                                        strokeWidth="1"
+                                        className={highlightedNodes.has(`tip-${tip.id}`) ? 'matched-path' : ''}
+                                    />
+                                    <text
+                                        x={(chapter.x + tip.x) / 2}
+                                        y={(chapter.y + tip.y) / 2 - 10}
+                                        textAnchor="middle"
+                                        fill="#718096"
+                                    >
+                                        describes
+                                    </text>
+                                    <circle
+                                        cx={tip.x}
+                                        cy={tip.y}
+                                        r="20"
+                                        fill="#F97316"
+                                        className={`node ${highlightedNodes.has(`tip-${tip.id}`) ? 'highlight' : ''}`}
+                                        onClick={() => setSelectedNode(tip)}
+                                    />
+                                    <text
+                                        x={tip.x}
+                                        y={tip.y}
+                                        textAnchor="middle"
+                                        dy=".3em"
+                                        fill="white"
+                                        pointerEvents="none"
+                                    >
+                                        {tip.id}
+                                    </text>
+                                </g>
+                            );
+                        })}
+
+                        {/* Content connections and nodes */}
+                        {tipPositions.flatMap(tip =>
+                            tip.contentPositions.map(content => (
+                                <g key={`content-${content.id}`}>
+                                    <line
+                                        x1={tip.x}
+                                        y1={tip.y}
+                                        x2={content.x}
+                                        y2 ={content.y}
+                                        stroke="#CBD5E0"
+                                        strokeWidth="1"
+                                        className={highlightedNodes.has(`content-${content.id}`) ? 'matched-path' : ''}
+                                    />
+                                    <text
+                                        x={(tip.x + content.x) / 2}
+                                        y={(tip.y + content.y) / 2 - 5}
+                                        textAnchor="middle"
+                                        fill="#718096"
+                                    >
+                                        explains
+                                    </text>
+                                    <circle
+                                        cx={content.x}
+                                        cy={content.y}
+                                        r="15"
+                                        fill="#A855F7"
+                                        className={`node ${highlightedNodes.has(`content-${content.id}`) ? 'highlight' : ''}`}
+                                        onClick={() => setSelectedNode(content)}
+                                    />
+                                    <text
+                                        x={content.x}
+                                        y={content.y}
+                                        textAnchor="middle"
+                                        dy=".3em"
+                                        fill="white"
+                                        pointerEvents="none"
+                                    >
+                                        {content.type === 'key_point' ? 'K' : 'S'}
+                                    </text>
+                                </g>
+                            ))
+                        )}
+                    </svg>
+
+                    {/* Info Panel */}
+                    {selectedNode && (
+                        <div className="info-panel">
+                            {selectedNode.type === 'book' ? (
+                                <h3>{selectedNode.title}</h3>
+                            ) : (
+                                <>
+                                    <h3>{selectedNode.title}</h3>
+                                    {selectedNode.tips && (
+                                        <ul>
+                                            {selectedNode.tips.map(tip => (
+                                                <li key={tip.id}>{tip.title}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    {selectedNode.text && (
+                                        <p>{selectedNode.text}</p>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Initial render
+        ReactDOM.render(<BookGraphWithQA />, document.getElementById('root'));
+    </script>
+</body>
+</html>
