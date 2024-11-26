@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 1 Tessellation</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: #f8fafc;
+        }
+        .node {
+            fill: #3B82F6;
+            stroke: #fff;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .tooltip {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <svg id="chapter-tessellation" width="800" height="600"></svg>
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+    <script>
+        const points = [{'id': '1.3', 'title': 'xiv \nCHAPTER 1:  In the Beginning', 'x': 50, 'y': 300}, {'id': '1.10', 'title': 'CHAPTER 6:  Operate Like a Successful Startup \nXXX', 'x': 150, 'y': 300}, {'id': '1.15', 'title': 'In The Beginning     1', 'x': 250, 'y': 300}, {'id': '1.16', 'title': 'CHAPTER 1 \nIn the Beginning', 'x': 350, 'y': 300}, {'id': '1.17', 'title': 'In the beginning, there is an idea followed by a s...', 'x': 450, 'y': 300}];
+
+        const svg = d3.select("#chapter-tessellation");
+        const tooltip = d3.select("#tooltip");
+
+        // Draw nodes for each cell
+        svg.selectAll(".node")
+            .data(points)
+            .enter()
+            .append("circle")
+            .attr("class", "node")
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y)
+            .attr("r", 20)
+            .on("mouseover", (event, d) => {
+                tooltip.style("display", "block")
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY + 10}px`)
+                    .html(`<strong>${d.title}</strong>`);
+            })
+            .on("mouseout", () => {
+                tooltip.style("display", "none");
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Demo 2: Chapter 1</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .graph-container {
+            width: 100vw;
+            height: 100vh;
+            background: #f8fafc;
+            position: relative;
+        }
+        .node {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .node:hover {
+            filter: brightness(90%);
+        }
+        .highlight {
+            fill: #FCD34D !important;
+            stroke: #F59E0B !important;
+            stroke-width: 3;
+        }
+        .edge-label {
+            font-size: 12px;
+            fill: #718096;
+        }
+        .info-panel {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            max-width: 24rem;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Enhanced Chapter 1 Data
+        const chapter1Data = {
+            id: "1",
+            title: "In the Beginning",
+            tips: [
+                { 
+                    id: "1.1", 
+                    title: "Origins of Ideas",
+                    content: [
+                        { id: "1.1.1", type: "key_point", text: "An idea starts with curiosity and exploration." },
+                        { id: "1.1.2", type: "key_point", text: "Ideas evolve through collaboration and feedback." }
+                    ]
+                },
+                { 
+                    id: "1.2", 
+                    title: "Startup Formation",
+                    content: [
+                        { id: "1.2.1", type: "summary", text: "Startups grow from innovative ideas and strong teams." },
+                        { id: "1.2.2", type: "key_point", text: "Execution matters more than the idea itself." }
+                    ]
+                }
+            ]
+        };
+
+        function EnhancedBookGraph() {
+            const [selectedNode, setSelectedNode] = React.useState(null);
+
+            const width = 800;
+            const height = 600;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const tipRadius = 200;
+            const contentRadius = 100;
+
+            const tips = chapter1Data.tips.map((tip, index) => {
+                const angle = (index * 2 * Math.PI) / chapter1Data.tips.length;
+                const x = centerX + tipRadius * Math.cos(angle);
+                const y = centerY + tipRadius * Math.sin(angle);
+                
+                const contentPositions = tip.content.map((content, contentIndex) => {
+                    const contentAngle = angle + ((contentIndex - (tip.content.length - 1) / 2) * 0.3);
+                    return {
+                        ...content,
+                        x: x + contentRadius * Math.cos(contentAngle),
+                        y: y + contentRadius * Math.sin(contentAngle)
+                    };
+                });
+
+                return {
+                    ...tip,
+                    x,
+                    y,
+                    contentPositions
+                };
+            });
+
+            return (
+                <div className="graph-container">
+                    <svg width={width} height={height}>
+                        {/* Center Node */}
+                        <circle 
+                            cx={centerX} 
+                            cy={centerY} 
+                            r="30" 
+                            fill="#3B82F6" 
+                            className="node"
+                            onClick={() => setSelectedNode({ title: chapter1Data.title })}
+                        />
+                        <text 
+                            x={centerX} 
+                            y={centerY} 
+                            textAnchor="middle" 
+                            dy=".3em" 
+                            fill="white"
+                            pointerEvents="none"
+                        >
+                            Chapter 1
+                        </text>
+
+                        {/* Tips and Content */}
+                        {tips.map(tip => (
+                            <g key={tip.id}>
+                                {/* Edge to Tip */}
+                                <line
+                                    x1={centerX}
+                                    y1={centerY}
+                                    x2={tip.x}
+                                    y2={tip.y}
+                                    stroke="#CBD5E0"
+                                    strokeWidth="2"
+                                />
+                                <circle
+                                    cx={tip.x}
+                                    cy={tip.y}
+                                    r="20"
+                                    fill="#22C55E"
+                                    className="node"
+                                    onClick={() => setSelectedNode(tip)}
+                                />
+                                <text
+                                    x={tip.x}
+                                    y={tip.y}
+                                    textAnchor="middle"
+                                    dy=".3em"
+                                    fill="white"
+                                    pointerEvents="none"
+                                >
+                                    {tip.title}
+                                </text>
+
+                                {/* Content Nodes */}
+                                {tip.contentPositions.map(content => (
+                                    <g key={content.id}>
+                                        <line
+                                            x1={tip.x}
+                                            y1={tip.y}
+                                            x2={content.x}
+                                            y2={content.y}
+                                            stroke="#CBD5E0"
+                                            strokeWidth="1"
+                                        />
+                                        <circle
+                                            cx={content.x}
+                                            cy={content.y}
+                                            r="15"
+                                            fill="#A855F7"
+                                            className="node"
+                                            onClick={() => setSelectedNode(content)}
+                                        />
+                                        <text
+                                            x={content.x}
+                                            y={content.y}
+                                            textAnchor="middle"
+                                            dy=".3em"
+                                            fill="white"
+                                            pointerEvents="none"
+                                        >
+                                            {content.type === 'key_point' ? 'K' : 'S'}
+                                        </text>
+                                    </g>
+                                ))}
+                            </g>
+                        ))}
+                    </svg>
+
+                    {/* Info Panel */}
+                    {selectedNode && (
+                        <div className="info-panel">
+                            <h3>{selectedNode.title}</h3>
+                            {selectedNode.content && (
+                                <ul>
+                                    {selectedNode.content.map((c, i) => (
+                                        <li key={i}>{c.text}</li>
+                                    ))}
+                                </ul>
+                            )}
+                            {selectedNode.text && (
+                                <p>{selectedNode.text}</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<EnhancedBookGraph />, document.getElementById('root'));
+    </script>
+</body>
+</html>

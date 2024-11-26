@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Voronoi Graph with Hyperlinks</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: #f8fafc;
+        }
+        .voronoi-cell {
+            fill-opacity: 0.4;
+            stroke: #ccc;
+            stroke-width: 1px;
+        }
+        .node {
+            fill: #3B82F6;
+            stroke: #fff;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .label {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #333;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        .tooltip {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <svg id="voronoi-svg" width="800" height="600"></svg>
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+    <script>
+        // Sample book data
+        const bookData = {
+            chapters: [
+                {
+                    id: 1,
+                    title: "In the Beginning",
+                    description: "This chapter discusses the initial steps to build something great.",
+                    link: "#Chapter-1",
+                },
+                {
+                    id: 2,
+                    title: "Build a Solid Foundation",
+                    description: "This chapter focuses on laying the groundwork for success.",
+                    link: "#Chapter-2",
+                }
+            ]
+        };
+
+        // Flatten book data into points
+        const points = bookData.chapters.map((chapter, i) => ({
+            id: `chapter-${chapter.id}`,
+            title: chapter.title,
+            description: chapter.description,
+            link: chapter.link,
+            x: Math.random() * 800,
+            y: Math.random() * 600
+        }));
+
+        // SVG dimensions
+        const width = 800;
+        const height = 600;
+
+        // Create SVG element
+        const svg = d3.select("#voronoi-svg");
+
+        // Create tooltip
+        const tooltip = d3.select("#tooltip");
+
+        // Create Voronoi layout
+        const voronoi = d3.Delaunay.from(
+            points.map(p => [p.x, p.y])
+        ).voronoi([0, 0, width, height]);
+
+        // Draw Voronoi cells
+        svg.selectAll(".voronoi-cell")
+            .data(points)
+            .enter()
+            .append("path")
+            .attr("class", "voronoi-cell")
+            .attr("d", (d, i) => voronoi.renderCell(i))
+            .attr("fill", (d, i) => d3.interpolateRainbow(i / points.length))
+            .on("mouseover", (event, d) => {
+                tooltip.style("display", "block")
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY + 10}px`)
+                    .html(`<strong>${d.title}</strong><br>${d.description}`);
+            })
+            .on("mouseout", () => {
+                tooltip.style("display", "none");
+            })
+            .on("click", (event, d) => {
+                window.location.href = d.link; // Navigate to hyperlink
+            });
+
+        // Draw points (chapters)
+        svg.selectAll(".node")
+            .data(points)
+            .enter()
+            .append("circle")
+            .attr("class", "node")
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y)
+            .attr("r", 5)
+            .on("mouseover", (event, d) => {
+                tooltip.style("display", "block")
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY + 10}px`)
+                    .html(`<strong>${d.title}</strong><br>${d.description}`);
+            })
+            .on("mouseout", () => {
+                tooltip.style("display", "none");
+            });
+
+        // Add labels for each cell
+        svg.selectAll(".label")
+            .data(points)
+            .enter()
+            .append("text")
+            .attr("class", "label")
+            .attr("x", d => d.x)
+            .attr("y", d => d.y - 10) // Offset label above the point
+            .text(d => d.title);
+    </script>
+</body>
+</html>

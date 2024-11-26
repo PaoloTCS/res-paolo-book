@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Book Graph with Q&A</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <style>
+        /* Same styles as before */
+        body { 
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .graph-container {
+            width: 100vw;
+            height: 100vh;
+            background: #f8fafc;
+            position: relative;
+        }
+        .question-panel {
+            position: fixed;
+            left: 1rem;
+            top: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            width: 300px;
+            z-index: 10;
+        }
+        .info-panel {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            max-width: 24rem;
+            z-index: 10;
+        }
+        .question-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #CBD5E0;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .ask-button {
+            background: #3B82F6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .ask-button:hover {
+            background: #2563EB;
+        }
+        .answer-panel {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+        }
+        .node {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .node:hover {
+            filter: brightness(90%);
+        }
+        .highlight {
+            fill: #FCD34D !important;
+            stroke: #F59E0B !important;
+            stroke-width: 3;
+        }
+        .matched-path {
+            stroke: #FCD34D !important;
+            stroke-width: 3;
+        }
+        .edge-label {
+            font-size: 12px;
+            fill: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        function BookGraphWithQA() {
+            const [bookData, setBookData] = React.useState(null);
+            const [selectedNode, setSelectedNode] = React.useState(null);
+            const [question, setQuestion] = React.useState('');
+            const [answer, setAnswer] = React.useState(null);
+            const [highlightedNodes, setHighlightedNodes] = React.useState(new Set());
+
+            React.useEffect(() => {
+                fetch('./data/processed_book_data.json') // Path relative to HTML file
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Book data loaded:", data);
+            setBookData(data);
+        })
+        .catch(error => {
+            console.error("Error loading book data:", error);
+        });
+}, []);
+
+
+            if (!bookData) {
+                return <div>Loading book data...</div>;
+            }
+
+            // Function definitions (e.g., layout, findMatchingTips, handleAskQuestion) remain unchanged
+            // Use the `bookData` fetched dynamically instead of hardcoding it
+            // Update node render logic here to reflect fetched `bookData`
+
+            // Layout, graph rendering, and question handling logic go here, using the `bookData` object
+            console.log("Rendering book data:", bookData);
+            return (
+                <div className="graph-container">
+                    {/* Similar structure as before */}
+                </div>
+            );
+        }
+
+        // Initial render
+        ReactDOM.render(<BookGraphWithQA />, document.getElementById('root'));
+    </script>
+</body>
+</html>

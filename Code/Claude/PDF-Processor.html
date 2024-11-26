@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF to JSON Processor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Import your PDFConverter component here
+        import React, { useState } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+const ChunkedPDFConverter = () => {
+    const [pdfFile, setPdfFile] = useState(null);
+    const [numPages, setNumPages] = useState(null);
+    const [currentChunk, setCurrentChunk] = useState({ start: 0, end: 0 });
+    const [bookData, setBookData] = useState(null);
+    const [processingStatus, setProcessingStatus] = useState('');
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        setPdfFile(file);
+        setBookData({
+            chapters: []
+        });
+        
+        // Load PDF and get number of pages
+        const fileReader = new FileReader();
+        fileReader.onload = async function() {
+            const typedarray = new Uint8Array(this.result);
+            const pdf = await pdfjs.getDocument(typedarray).promise;
+            setNumPages(pdf.numPages);
+            setCurrentChunk({ start: 1, end: Math.min(50, pdf.numPages) });
+        };
+        fileReader.readAsArrayBuffer(file);
+    };
+
+    const processChunk = async () => {
+        setProcessingStatus(`Processing pages ${currentChunk.start} to ${currentChunk.end}...`);
+        // Process chunk logic here
+        //  extract text from these pages and structure it
+    };
+
+    const downloadPartialJSON = () => {
+        const jsonStr = JSON.stringify(bookData, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const href = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = href;
+        link.download = `processed_book_data_${currentChunk.start}_${currentChunk.end}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    return (
+        <div className="p-4">
+            <div className="mb-4">
+                <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    className="mb-4"
+                />
+            </div>
+
+            {pdfFile && (
+                <div className="space-y-4">
+                    <div className="text-sm text-gray-600">
+                        Total pages: {numPages}
+                        <br />
+                        Current chunk: Pages {currentChunk.start} to {currentChunk.end}
+                    </div>
+
+                    <div className="space-x-4">
+                        <button 
+                            onClick={processChunk}
+                            className="bg-blue-500 text-white px-4 py-2 rounded"
+                        >
+                            Process Current Chunk
+                        </button>
+
+                        <button 
+                            onClick={downloadPartialJSON}
+                            className="bg-green-500 text-white px-4 py-2 rounded"
+                        >
+                            Download Current JSON
+                        </button>
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                        {processingStatus}
+                    </div>
+
+                    {/* Manual data entry interface from previous component */}
+                    {bookData && (
+                        <div className="mt-8">
+                            <h2 className="text-lg font-bold mb-4">Edit Extracted Content</h2>
+                            {/* Previous data entry interface here */}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ChunkedPDFConverter;
+
+// End inserted code Chunked PDF Conveter  
+
+    </script>
+</body>
+</html>

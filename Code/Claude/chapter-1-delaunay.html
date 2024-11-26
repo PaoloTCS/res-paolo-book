@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 1 Delaunay Tessellation</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: #f8fafc;
+        }
+        .node {
+            fill: #3B82F6;
+            stroke: #fff;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .edge {
+            stroke: #CBD5E0;
+            stroke-width: 1.5px;
+        }
+        .tooltip {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <svg id="delaunay-svg" width="800" height="600"></svg>
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+    <script>
+        // Data points for Chapter 1 cells
+        const points = [
+            { id: "1.1", title: "Introduction to Chapter 1", x: 200, y: 100 },
+            { id: "1.2", title: "Origins of Ideas", x: 400, y: 300 },
+            { id: "1.3", title: "Startup Formation", x: 600, y: 150 },
+            { id: "1.4", title: "Technological Evolution", x: 350, y: 450 },
+            { id: "1.5", title: "The Rise of Hackers", x: 550, y: 400 }
+        ];
+
+        const svg = d3.select("#delaunay-svg");
+        const tooltip = d3.select("#tooltip");
+
+        // Draw edges using Delaunay triangulation
+        const delaunay = d3.Delaunay.from(points.map(d => [d.x, d.y]));
+        const edges = delaunay.edges();
+
+        edges.forEach(([i, j]) => {
+            svg.append("line")
+                .attr("class", "edge")
+                .attr("x1", points[i].x)
+                .attr("y1", points[i].y)
+                .attr("x2", points[j].x)
+                .attr("y2", points[j].y);
+        });
+
+        // Draw nodes
+        svg.selectAll(".node")
+            .data(points)
+            .enter()
+            .append("circle")
+            .attr("class", "node")
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y)
+            .attr("r", 20)
+            .on("mouseover", (event, d) => {
+                tooltip.style("display", "block")
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY + 10}px`)
+                    .html(`<strong>${d.title}</strong>`);
+            })
+            .on("mouseout", () => {
+                tooltip.style("display", "none");
+            });
+    </script>
+</body>
+</html>
