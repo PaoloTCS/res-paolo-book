@@ -1,5 +1,4 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [ main ]
@@ -8,6 +7,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Add explicit permissions
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v2
       
