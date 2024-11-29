@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "pdfjs-dist": "^4.8.69",
-    "react-pdf": "^9.1.1"
+    "react": "^18.2.0",
+    "lucide-react": "^0.263.1",
+    "shadcn-ui": "latest"
   }
 }
